@@ -1,3 +1,3 @@
 class Globals {
-    static final String RPC_QUEUE_NAME = "rpc";
+    static final String QUEUE_NAME = "hello";
 }

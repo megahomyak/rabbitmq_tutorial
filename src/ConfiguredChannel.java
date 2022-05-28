@@ -16,8 +16,8 @@ class ConfiguredChannel implements AutoCloseable {
         this.channel = this.connection.createChannel();
         this.channel.confirmSelect();  // Enable publisher confirms (a guarantee that the message will be delivered to the server)
         this.channel.basicQos(1);  // Works only for receivers
-        this.channel.queueDeclare(Globals.RPC_QUEUE_NAME, false, false, false, null);
-        this.channel.queuePurge(Globals.RPC_QUEUE_NAME);
+        this.channel.queueDeclare(Globals.QUEUE_NAME, false, false, false, null);
+        this.channel.queuePurge(Globals.QUEUE_NAME);
     }
 
     @Override
