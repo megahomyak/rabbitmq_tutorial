@@ -15,9 +15,9 @@ public class Sender {
             while (true) {
                 String message = scanner.nextLine();
                 channel.basicPublish(
-                        "",
-                        Globals.QUEUE_NAME,
-                        MessageProperties.PERSISTENT_TEXT_PLAIN,  // Messages should also be persistent
+                        Globals.EXCHANGE_NAME,
+                        "",  // I still don't know what routingKey is
+                        MessageProperties.PERSISTENT_TEXT_PLAIN,
                         message.getBytes(StandardCharsets.UTF_8)
                 );
                 System.out.println(" [x] Sent '" + message + "'");

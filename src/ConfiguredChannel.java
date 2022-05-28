@@ -14,15 +14,8 @@ class ConfiguredChannel implements AutoCloseable {
         factory.setHost("localhost");
         this.connection = factory.newConnection();
         this.channel = this.connection.createChannel();
-        this.channel.basicQos(1);  // Works only for Receivers
-
-        this.channel.queueDeclare(
-                Globals.QUEUE_NAME,
-                true,  // Messages survive the server restart
-                false,  // Accessible only for current connection and deletes on disconnection
-                false,  // Deletes when there are no consumers
-                null  // Additional arguments for plug-ins and the concrete broker
-        );
+        this.channel.basicQos(1);  // Works only for receivers
+        this.channel.exchangeDeclare(Globals.EXCHANGE_NAME, "fanout");
     }
 
     @Override

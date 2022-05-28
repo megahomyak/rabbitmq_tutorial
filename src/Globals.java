@@ -1,3 +1,3 @@
 class Globals {
-    static final String QUEUE_NAME = "hello";
+    static final String EXCHANGE_NAME = "logs";
 }
