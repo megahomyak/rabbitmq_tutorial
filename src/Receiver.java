@@ -1,6 +1,4 @@
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 
 import java.io.IOException;
@@ -9,18 +7,34 @@ import java.util.concurrent.TimeoutException;
 
 public class Receiver {
     public static void main(String[] args) throws IOException, TimeoutException {
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        Connection connection = factory.newConnection();
-        Channel channel = connection.createChannel();
-
-        channel.queueDeclare(Globals.QUEUE_NAME, false, false, false, null);
+        //noinspection resource
+        Channel channel = new ConfiguredChannel().channel;
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
             System.out.println(" [x] Received '" + message + "'");
+            doWork(message);
+            channel.basicAck(delivery.getEnvelope().getDeliveryTag(),false);
+            System.out.println(" [x] Done!");
         };
-        channel.basicConsume(Globals.QUEUE_NAME, true, deliverCallback, consumerTag -> { });
+        channel.basicConsume(
+                Globals.QUEUE_NAME,
+                false,  // Assume that messages received by workers are served and thus can be deleted
+                deliverCallback,
+                consumerTag -> { }
+        );
+    }
+
+    private static void doWork(String message) {
+        try {
+            for (char character : message.toCharArray()) {
+                if (character == '.') {
+                    Thread.sleep(1000);
+                }
+            }
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
