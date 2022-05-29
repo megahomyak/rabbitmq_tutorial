@@ -15,7 +15,8 @@ class ConfiguredChannel implements AutoCloseable {
         this.connection = factory.newConnection();
         this.channel = this.connection.createChannel();
         this.channel.basicQos(1);  // Works only for receivers
-        this.channel.exchangeDeclare(Globals.EXCHANGE_NAME, "topic");
+        this.channel.queueDeclare(Globals.RPC_QUEUE_NAME, false, false, false, null);
+        this.channel.queuePurge(Globals.RPC_QUEUE_NAME);
     }
 
     @Override
