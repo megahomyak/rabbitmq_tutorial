@@ -24,7 +24,7 @@ public final class RPCClient implements AutoCloseable {
         this.receivingChannel.close();
     }
 
-    private String call(String message) throws IOException, InterruptedException {
+    private String call(String message) throws IOException, InterruptedException, TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         this.receivingChannel.channel.basicPublish(
                 "",
@@ -32,6 +32,7 @@ public final class RPCClient implements AutoCloseable {
                 new AMQP.BasicProperties.Builder().replyTo(this.receivingQueueName).correlationId(correlationId).build(),
                 message.getBytes(StandardCharsets.UTF_8)
         );
+        this.receivingChannel.channel.waitForConfirmsOrDie(5000);
         BlockingQueue<String> incomingMessages = new ArrayBlockingQueue<>(1);
         String currentHandlerConsumerTag = this.receivingChannel.channel.basicConsume(this.receivingQueueName, false, (consumerTag, delivery) -> {
             if (delivery.getProperties().getCorrelationId().equals(correlationId)) {

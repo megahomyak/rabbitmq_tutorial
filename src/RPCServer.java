@@ -18,12 +18,21 @@ public class RPCServer {
             String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
             System.out.println(" [x] Received '" + message + "'");
             String result = fib(new BigInteger(message)).toString();
-            channel.basicPublish(
-                    "",
-                    delivery.getProperties().getReplyTo(),
-                    new AMQP.BasicProperties.Builder().correlationId(delivery.getProperties().getCorrelationId()).build(),
-                    result.getBytes(StandardCharsets.UTF_8)
-            );
+            resendMessage:
+            while (true) {
+                channel.basicPublish(
+                        "",
+                        delivery.getProperties().getReplyTo(),
+                        new AMQP.BasicProperties.Builder().correlationId(delivery.getProperties().getCorrelationId()).build(),
+                        result.getBytes(StandardCharsets.UTF_8)
+                );
+                try {
+                    channel.waitForConfirmsOrDie(5000);
+                    break resendMessage;
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (TimeoutException ignored) {}
+            }
             System.out.println(" [x] Sent '" + result + "'");
             channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         };
