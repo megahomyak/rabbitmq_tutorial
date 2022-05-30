@@ -1,4 +1,6 @@
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 
 import java.io.IOException;
@@ -6,33 +8,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeoutException;
 
 public class Receiver {
-    private static String lastReceivedMessage = null;
-    private static int amountOfEqualMessages = 0;
-
     public static void main(String[] args) throws IOException, TimeoutException {
-        //noinspection resource
-        Channel channel = new ConfiguredChannel().channel;
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+
+        channel.queueDeclare(Globals.QUEUE_NAME, false, false, false, null);
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
-        RepeatingPrinter repeatingPrinter = new RepeatingPrinter();
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            if (message.equals(lastReceivedMessage) || lastReceivedMessage == null) {
-                ++amountOfEqualMessages;
-            } else {
-                amountOfEqualMessages = 1;
-                System.out.println();
-            }
-            repeatingPrinter.print(" [x] Received '%s' %d times", message, amountOfEqualMessages);
-            lastReceivedMessage = message;
-
-            channel.basicAck(delivery.getEnvelope().getDeliveryTag(),false);
+            System.out.println(" [x] Received '" + message + "'");
         };
-        channel.basicConsume(
-                Globals.QUEUE_NAME,
-                false,  // Assume that messages received by workers are served and thus can be deleted
-                deliverCallback,
-                consumerTag -> { }
-        );
+        channel.basicConsume(Globals.QUEUE_NAME, true, deliverCallback, consumerTag -> { });
     }
 }
